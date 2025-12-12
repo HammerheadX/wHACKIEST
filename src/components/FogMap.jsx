@@ -1,20 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { MapPin, Navigation, Map as MapIcon } from 'lucide-react';
+import * as turf from '@turf/turf'; // Make sure you ran: npm install @turf/turf
+import { Navigation, Map as MapIcon } from 'lucide-react';
 
 const FogMap = ({ quests }) => {
   const mapContainer = useRef(null);
   const mapInstance = useRef(null);
-  const canvasRef = useRef(null);
   
-  // 📍 CONSTANTS
+  // 📍 LOCATIONS & SETTINGS
   const HAMPI_LOCATION = [76.4600, 15.3350]; 
-  const VISIBILITY_RADIUS_METERS = 2000; // 2km radius (5km total width)
-  
-  // State
+  const FOG_COLOR = '#000000';
+  const FOG_OPACITY = 0.85;
+  const VISIBILITY_RADIUS_KM = 2.5; // Total 5km wide circle
+
+  // State for the "Cleared Area" (A GeoJSON Polygon)
+  const [clearedArea, setClearedArea] = useState(null);
   const [userLocation, setUserLocation] = useState(HAMPI_LOCATION);
-  const [zoomLevel, setZoomLevel] = useState(13);
 
   // 1. Initialize Map
   useEffect(() => {
@@ -41,41 +43,40 @@ const FogMap = ({ quests }) => {
         ]
       },
       center: HAMPI_LOCATION,
-      zoom: 13,
+      zoom: 12,
     });
 
     mapInstance.current = map;
 
     map.on('load', () => {
-      // Add a marker for "You"
+      // A. Add the User Marker
       const el = document.createElement('div');
-      el.className = 'w-6 h-6 bg-orange-500 rounded-full border-4 border-white shadow-xl animate-pulse z-50';
-      el.id = 'user-marker';
-      
+      el.className = 'w-6 h-6 bg-orange-500 rounded-full border-4 border-white shadow-xl z-50';
       new maplibregl.Marker({ element: el })
         .setLngLat(HAMPI_LOCATION)
         .addTo(map);
 
-      drawFog();
-    });
+      // B. Add the Fog Source (Initially empty)
+      map.addSource('fog-mask', {
+        type: 'geojson',
+        data: getWorldMask(null) // Start with full fog
+      });
 
-    // Event Listeners for Fog Sync
-    map.on('move', () => {
-        drawFog();
-        // Update user location state if map center isn't user (optional logic)
-    });
-    
-    map.on('zoom', () => {
-        setZoomLevel(map.getZoom());
-        drawFog();
-    });
+      // C. Add the Fog Layer
+      map.addLayer({
+        id: 'fog-layer',
+        type: 'fill',
+        source: 'fog-mask',
+        layout: {},
+        paint: {
+          'fill-color': FOG_COLOR,
+          'fill-opacity': FOG_OPACITY
+        }
+      });
 
-    map.on('resize', () => {
-      resizeCanvas();
-      drawFog();
+      // D. Initialize the "Cleared Area" at start position
+      updateClearedZone(HAMPI_LOCATION);
     });
-    
-    resizeCanvas();
 
     return () => {
       map.remove();
@@ -83,136 +84,118 @@ const FogMap = ({ quests }) => {
     };
   }, []);
 
-  // 2. Walking Simulator (Moves the user marker)
+  // 2. Simulate Walking (Game Loop)
   useEffect(() => {
     const interval = setInterval(() => {
-        if (!mapInstance.current) return;
+      if (!mapInstance.current) return;
 
-        setUserLocation(prev => {
-            // Move slightly random
-            const newLat = prev[1] + (Math.random() - 0.5) * 0.001;
-            const newLng = prev[0] + (Math.random() - 0.5) * 0.001;
-            const newLoc = [newLng, newLat];
+      setUserLocation(prev => {
+        // Move slightly (Simulation)
+        const newLat = prev[1] + (Math.random() - 0.5) * 0.003;
+        const newLng = prev[0] + (Math.random() - 0.5) * 0.003;
+        const newLoc = [newLng, newLat];
 
-            // Update Marker on Map
-            const markerEl = document.getElementById('user-marker');
-            if (markerEl) {
-                // We assume there's only one marker for now or manage via ref in real app
-                 // In pure MapLibre, we'd update the marker instance. 
-                 // For simplicity in this demo, we re-render fog which reads this state
-            }
-            
-            // NOTE: In a real app, keep a ref to the marker instance to .setLngLat(newLoc)
-            // Here we just trigger a redraw to keep it simple
-            return newLoc;
-        });
-    }, 1000);
+        // Update the cleared zone based on new location
+        updateClearedZone(newLoc);
+        
+        return newLoc;
+      });
+    }, 1500); // Move every 1.5 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [clearedArea]); // Dependency ensures we merge with LATEST clearedArea
 
-  // 3. Sync Fog with User Location Change
-  useEffect(() => {
-      if(!mapInstance.current) return;
-      
-      // Update the actual MapLibre marker position
-      // (Advanced: ideally store marker instance in a ref)
-      // For this demo, we rely on the fog drawing correctly around the logic coordinate
-      
-      drawFog();
-  }, [userLocation]);
-
-
-  // --- CORE LOGIC: Draw Fog based on Map Projection ---
-  const drawFog = () => {
+  // --- CORE LOGIC: Vector "Hole Punching" ---
+  const updateClearedZone = (currentLoc) => {
     const map = mapInstance.current;
-    const canvas = canvasRef.current;
-    if (!map || !canvas) return;
+    if (!map || !map.getSource('fog-mask')) return;
 
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    // 1. Create a circle around the user (The "Torch")
+    const visibilityCircle = turf.circle(currentLoc, VISIBILITY_RADIUS_KM, { 
+      steps: 64, // Smoothness of circle
+      units: 'kilometers' 
+    });
 
-    // 1. Clear & Fill Black
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'; // Dark Fog
-    ctx.fillRect(0, 0, width, height);
+    // 2. Merge this circle with previously cleared areas
+    let newClearedArea;
+    if (clearedArea) {
+      newClearedArea = turf.union(turf.featureCollection([clearedArea, visibilityCircle]));
+    } else {
+      newClearedArea = visibilityCircle;
+    }
 
-    // 2. Calculate "Hole" Position & Size
-    // Convert Lat/Lng to Screen X/Y
-    const screenPos = map.project(userLocation);
+    setClearedArea(newClearedArea);
+
+    // 3. Calculate "World MINUS ClearedArea"
+    // This creates the shape with holes in it
+    const fogGeoJSON = getWorldMask(newClearedArea);
     
-    // Calculate Radius: Convert meters to pixels based on latitude & zoom
-    // Formula: meters / metersPerPixel
-    const lat = userLocation[1];
-    const metersPerPixel = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, map.getZoom());
-    const pixelRadius = VISIBILITY_RADIUS_METERS / metersPerPixel;
-
-    // 3. Punch the Hole
-    ctx.globalCompositeOperation = 'destination-out';
-    
-    const gradient = ctx.createRadialGradient(
-        screenPos.x, screenPos.y, pixelRadius * 0.2, // Inner (hard clear)
-        screenPos.x, screenPos.y, pixelRadius        // Outer (fade)
-    );
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 1)'); 
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, pixelRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.globalCompositeOperation = 'source-over';
+    // 4. Update the map source
+    map.getSource('fog-mask').setData(fogGeoJSON);
   };
 
-  const resizeCanvas = () => {
-    if (canvasRef.current) {
-        canvasRef.current.width = window.innerWidth;
-        canvasRef.current.height = window.innerHeight;
+  // Helper: Returns a Giant Polygon (World) with the 'mask' cut out of it
+  const getWorldMask = (maskPoly) => {
+    // A polygon covering the whole world
+    const world = turf.polygon([[
+      [-180, -90],
+      [180, -90],
+      [180, 90],
+      [-180, 90],
+      [-180, -90]
+    ]]);
+
+    if (!maskPoly) return world;
+
+    try {
+      return turf.difference(turf.featureCollection([world, maskPoly]));
+    } catch (e) {
+      console.error("Turf Error:", e);
+      return world;
     }
   };
 
-  // --- BUTTON HANDLERS ---
+  // --- CONTROLS ---
   const flyToUser = () => {
-      mapInstance.current?.flyTo({ center: userLocation, zoom: 14 });
+    mapInstance.current?.flyTo({ center: userLocation, zoom: 13 });
   };
 
   const flyToHampi = () => {
-      mapInstance.current?.flyTo({ center: HAMPI_LOCATION, zoom: 14 });
+    mapInstance.current?.flyTo({ center: HAMPI_LOCATION, zoom: 13 });
   };
 
   return (
     <>
       <div 
         ref={mapContainer} 
-        className="fixed inset-0 w-full h-full z-0" 
-        style={{ backgroundColor: 'black' }}
-      />
-      <canvas 
-        ref={canvasRef} 
-        className="fixed inset-0 w-full h-full z-10 pointer-events-none" 
+        className="fixed inset-0 w-full h-full z-0 bg-black" 
       />
 
-      {/* --- FLOATING CONTROLS --- */}
+      {/* Controls */}
       <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 flex gap-4">
-        
         <button 
-            onClick={flyToUser}
-            className="flex items-center gap-2 px-6 py-3 bg-brand-accent text-white rounded-full shadow-lg hover:scale-105 transition font-bold"
+          onClick={flyToUser}
+          className="flex items-center gap-2 px-6 py-3 bg-brand-accent text-white rounded-full shadow-lg hover:scale-105 transition font-bold border-2 border-white"
         >
-            <Navigation size={18} fill="currentColor" />
-            My Location
+          <Navigation size={18} fill="currentColor" />
+          My Location
         </button>
 
         <button 
-            onClick={flyToHampi}
-            className="flex items-center gap-2 px-6 py-3 bg-brand-dark text-white rounded-full shadow-lg hover:scale-105 transition font-bold"
+          onClick={flyToHampi}
+          className="flex items-center gap-2 px-6 py-3 bg-brand-dark text-white rounded-full shadow-lg hover:scale-105 transition font-bold border-2 border-white"
         >
-            <MapIcon size={18} />
-            Hampi Site
+          <MapIcon size={18} />
+          Hampi Site
         </button>
-
+      </div>
+      
+      {/* UI Overlay */}
+      <div className="fixed top-28 left-6 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-2xl border border-white/50 w-72">
+        <h2 className="font-bold text-brand-dark text-lg">Wanderer Mode</h2>
+        <p className="text-xs text-gray-600 mt-1">
+          Fog is persistent. Areas you explore stay revealed.
+        </p>
       </div>
     </>
   );
