@@ -4,7 +4,7 @@ import HeroCarousel from '../components/HeroCarousel';
 import SectionSlider from '../components/SectionSlider';
 import QuestCard from '../components/QuestCard';
 import { useGamification } from '../context/GamificationContext';
-import { Bot, Map } from 'lucide-react';
+import { Bot, Map, Compass, Tent } from 'lucide-react';
 import Chatbot from '../components/Chatbot';
 import PlaceDetailModal from '../components/PlaceDetailModal';
 import { ArrowRight, Star } from 'lucide-react';
@@ -72,13 +72,20 @@ export default function ExplorerMode() {
         title="Places to visit"
         items={places}
         onSelect={(place) => setSelectedPlace(place)}
+        icon={Compass}
+        theme="blue"
       />
 
       {/* Active Quests Section - Horizontal Scroll */}
       <div className="py-8 px-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Map className="text-brand-accent" />
-          <h2 className="text-2xl font-serif font-bold text-gray-900">Available Quests</h2>
+        <div className="flex justify-between items-center pr-6 mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
+              <Map size={20} />
+            </div>
+            <h2 className="text-brand-dark text-xl font-black tracking-tight">Available Quests</h2>
+          </div>
+          <span className="text-xs font-bold uppercase cursor-pointer hover:underline text-orange-600 hidden">View All</span>
         </div>
 
         <div className="overflow-x-auto pb-8 -mx-6 px-6 no-scrollbar flex gap-6 snap-x snap-mandatory">
@@ -100,10 +107,12 @@ export default function ExplorerMode() {
       </div>
 
       <SectionSlider
-        title="Activities nearby"
+        title="Activities for you"
         items={activities}
         isActivity={true}
         onSelect={(place) => setSelectedPlace(place)}
+        icon={Tent}
+        theme="green"
       />
 
       <Chatbot ref={chatbotRef} />
