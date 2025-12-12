@@ -27,7 +27,7 @@ function TopHeader() {
         <h1 className="text-white text-3xl font-serif font-black drop-shadow-lg leading-tight">Aayush</h1>
       </div>
 
-      <div className="pointer-events-autoVE absolute left-1/2 transform -translate-x-1/2 top-6">
+      <div className="pointer-events-auto absolute left-1/2 transform -translate-x-1/2 top-6">
         <nav className="flex space-x-1 bg-white/30 backdrop-blur-xl border border-white/40 rounded-full p-1.5 shadow-2xl">
           <Link to="/" className={navItemClass('/')}>Explore</Link>
           <Link to="/wanderer" className={navItemClass('/wanderer')}>Wanderer</Link>
