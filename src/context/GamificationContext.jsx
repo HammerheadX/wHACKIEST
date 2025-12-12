@@ -12,8 +12,7 @@ export function GamificationProvider({ children }) {
     const [badges, setBadges] = useState(() => JSON.parse(localStorage.getItem('hampi_badges')) || []);
     // Stamps: { common: 0, rare: 0, epic: 0, mythic: 0 }
     const [stamps, setStamps] = useState(() => JSON.parse(localStorage.getItem('hampi_stamps')) || { common: 0, rare: 0, epic: 0, mythic: 0 });
-    // ... imports
-    const GamificationContext = createContext();
+
 
     // ... inside provider
     // Dynamic quests (AI Generated)
