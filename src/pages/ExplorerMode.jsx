@@ -11,9 +11,33 @@ import Chatbot from '../components/Chatbot';
 import { ArrowRight, Star } from 'lucide-react';
 
 
+import { useGeolocation } from '../hooks/useGeolocation';
+import { calculateDistance } from '../utils/distance';
+
 export default function ExplorerMode() {
-  const places = sites.filter(site => site.category === 'place');
-  const activities = sites.filter(site => site.category === 'activity');
+  const location = useGeolocation();
+
+  const calculateSiteDistance = (site) => {
+    if (location.loaded && !location.error && location.coordinates.lat && location.coordinates.lng) {
+      const dist = calculateDistance(
+        location.coordinates.lat,
+        location.coordinates.lng,
+        site.lat,
+        site.lng
+      );
+      if (dist) return `${dist} km`;
+    }
+    return site.distance;
+  };
+
+  const places = sites.filter(site => site.category === 'place').map(site => ({
+    ...site,
+    distance: calculateSiteDistance(site)
+  }));
+  const activities = sites.filter(site => site.category === 'activity').map(site => ({
+    ...site,
+    distance: calculateSiteDistance(site)
+  }));
 
   const { quests, completedQuests, completeQuest } = useGamification();
   // Filter for incomplete "Discovery" quests to show first, or just show all
@@ -36,8 +60,8 @@ export default function ExplorerMode() {
         <HeroCarousel sites={places} />
       </div>
 
-      <SectionSlider title="Places near by" items={places} />
-      <SectionSlider title="Places near by" items={places} />
+      <SectionSlider title="Places to visit" items={places} />
+      <SectionSlider title="Places to visit" items={places} />
 
       {/* Active Quests Section - Horizontal Scroll */}
       <div className="py-8 px-6">
