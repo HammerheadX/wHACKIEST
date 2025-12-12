@@ -1,54 +1,9 @@
-<<<<<<< HEAD
-import React from 'react';
-import Map, { Marker } from 'react-map-gl/maplibre';
-=======
 import React, { useEffect, useRef, useState } from 'react';
->>>>>>> 54ebe24c27e2408ec8d4c3171e37527a3851ba99
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Navigation, MapPin, Search, X, Crosshair, ArrowUp, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 
 const FogMap = () => {
-<<<<<<< HEAD
-  // Hampi Coordinates
-  const START_LOCATION = {
-    longitude: 76.4600,
-    latitude: 15.3350
-  };
-
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1, backgroundColor: '#e5e7eb' }}>
-      <Map
-        mapLib={maplibregl}
-        initialViewState={{
-          ...START_LOCATION,
-          zoom: 14
-        }}
-        style={{ width: '100%', height: '100%' }}
-        mapStyle={{
-          version: 8,
-          sources: {
-            osm: {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: '&copy; OpenStreetMap Contributors'
-            }
-          },
-          layers: [
-            {
-              id: 'osm',
-              type: 'raster',
-              source: 'osm',
-              minzoom: 0,
-              maxzoom: 22
-            }
-          ]
-        }}
-      >
-        <Marker longitude={START_LOCATION.longitude} latitude={START_LOCATION.latitude} color="red" />
-      </Map>
-=======
   const mapContainer = useRef(null);
   const mapInstance = useRef(null);
 
@@ -95,7 +50,7 @@ const FogMap = () => {
       },
       center: START_LOCATION,
       zoom: 14,
-      pitch: 0, // start 2D, switch to 3D on nav
+      pitch: 0,
     });
 
     mapInstance.current = map;
@@ -114,12 +69,11 @@ const FogMap = () => {
       const newUserLocation = [e.coords.longitude, e.coords.latitude];
       setUserLocation(newUserLocation);
 
-      // If navigating and following, smooth pan to user
       if (isNavigating && isFollowingUser && mapInstance.current) {
         mapInstance.current.easeTo({
           center: newUserLocation,
           zoom: 17,
-          pitch: 60, // 3D driving view
+          pitch: 60,
           bearing: e.coords.heading || 0
         });
       }
@@ -221,7 +175,6 @@ const FogMap = () => {
             });
           }
 
-          // Fit bounds if not already navigating/following
           if (!isNavigating) {
             const bounds = new maplibregl.LngLatBounds();
             route.geometry.coordinates.forEach(coord => bounds.extend(coord));
@@ -237,18 +190,16 @@ const FogMap = () => {
   const startNavigation = () => {
     setIsNavigating(true);
     setIsFollowingUser(true);
-    // Tilt map for driving mode
     if (mapInstance.current && userLocation) {
       mapInstance.current.flyTo({
         center: userLocation,
         zoom: 18,
         pitch: 60,
-        bearing: 0 // Default north up, geolocate updates actual heading
+        bearing: 0
       });
     }
     if (userLocation && destination) {
       fetchRoute(userLocation, destination.coords);
-      // Poll route every 10s (simulated logic)
     }
   };
 
@@ -261,13 +212,12 @@ const FogMap = () => {
     setSearchQuery(''); // Clear search
     if (mapInstance.current) {
       mapInstance.current.getSource('route').setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: [] } });
-      mapInstance.current.easeTo({ pitch: 0, zoom: 14 }); // Reset view
+      mapInstance.current.easeTo({ pitch: 0, zoom: 14 });
     }
   };
 
   const getTurnIcon = (maneuver) => {
     if (!maneuver) return <ArrowUp size={30} />;
-    const type = maneuver.type;
     const modifier = maneuver.modifier;
     if (modifier?.includes('left')) return <ArrowLeft size={30} />;
     if (modifier?.includes('right')) return <ArrowRight size={30} />;
@@ -342,7 +292,6 @@ const FogMap = () => {
       {destination && (
         <div className="absolute bottom-10 left-4 right-4 md:left-auto md:right-8 md:w-96 bg-white rounded-2xl shadow-xl p-5 z-20 border border-gray-100 flex flex-col gap-4">
 
-          {/* Destination Header */}
           <div className="flex justify-between items-center border-b pb-3">
             <div>
               <h3 className="font-bold text-lg text-gray-800">{destination.name}</h3>
@@ -353,7 +302,6 @@ const FogMap = () => {
             </button>
           </div>
 
-          {/* Route Stats */}
           {routeInfo && (
             <div className="flex items-center justify-between bg-blue-50 p-3 rounded-xl border border-blue-100">
               <div className="text-center w-1/2 border-r border-blue-200">
@@ -367,7 +315,6 @@ const FogMap = () => {
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex gap-2">
             {!isNavigating ? (
               <button
@@ -386,7 +333,6 @@ const FogMap = () => {
               </button>
             )}
 
-            {/* Recenter Button (Only when navigating) */}
             {isNavigating && (
               <button
                 onClick={() => setIsFollowingUser(true)}
@@ -398,7 +344,6 @@ const FogMap = () => {
           </div>
         </div>
       )}
->>>>>>> 54ebe24c27e2408ec8d4c3171e37527a3851ba99
     </div>
   );
 };
