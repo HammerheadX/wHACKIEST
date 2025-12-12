@@ -40,8 +40,13 @@ export default function ExplorerMode() {
   }));
 
   const { quests, completedQuests, completeQuest } = useGamification();
-  // Filter for incomplete "Discovery" quests to show first, or just show all
-  const availableQuests = quests.filter(q => !completedQuests.includes(q.id));
+  // Show all quests, but sort incomplete ones first
+  const sortedQuests = [...quests].sort((a, b) => {
+    const aCompleted = completedQuests.includes(a.id);
+    const bCompleted = completedQuests.includes(b.id);
+    if (aCompleted === bCompleted) return 0;
+    return aCompleted ? 1 : -1;
+  });
 
 
 
@@ -63,6 +68,7 @@ export default function ExplorerMode() {
       <SectionSlider title="Places to visit" items={places} />
       <SectionSlider title="Places to visit" items={places} />
 
+
       {/* Active Quests Section - Horizontal Scroll */}
       <div className="py-8 px-6">
         <div className="flex items-center gap-2 mb-6">
@@ -71,16 +77,16 @@ export default function ExplorerMode() {
         </div>
 
         <div className="overflow-x-auto pb-8 -mx-6 px-6 no-scrollbar flex gap-6 snap-x snap-mandatory">
-          {availableQuests.map(quest => (
-            <div key={quest.id} className="snap-center shrink-0">
+          {sortedQuests.map(quest => (
+            <div key={quest.id} className="snap-center shrink-0 flex">
               <QuestCard
                 quest={quest}
-                isCompleted={false}
+                isCompleted={completedQuests.includes(quest.id)}
                 onClaim={completeQuest}
               />
             </div>
           ))}
-          {availableQuests.length === 0 && (
+          {sortedQuests.length === 0 && (
             <div className="w-full text-center py-10 text-gray-500 italic">
               All currently available quests completed!
             </div>
