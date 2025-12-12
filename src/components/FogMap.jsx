@@ -1,69 +1,48 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
+import Map, { Marker } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 const FogMap = () => {
-  const mapContainer = useRef(null);
-  const mapInstance = useRef(null);
-
   // Hampi Coordinates
-  const START_LOCATION = [76.4600, 15.3350]; 
-
-  useEffect(() => {
-    if (mapInstance.current) return; // Prevent double load
-
-    // Initialize Map
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          'osm': {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            attribution: '&copy; OpenStreetMap Contributors',
-          }
-        },
-        layers: [
-          {
-            id: 'osm',
-            type: 'raster',
-            source: 'osm',
-          }
-        ]
-      },
-      center: START_LOCATION,
-      zoom: 14,
-    });
-
-    mapInstance.current = map;
-
-    // Add a simple marker to prove it's Hampi
-    new maplibregl.Marker({ color: 'red' })
-      .setLngLat(START_LOCATION)
-      .addTo(map);
-
-    return () => {
-      map.remove();
-      mapInstance.current = null;
-    };
-  }, []);
+  const START_LOCATION = {
+    longitude: 76.4600,
+    latitude: 15.3350
+  };
 
   return (
-    // We use the EXACT same positioning that worked for the Red Screen
-    <div 
-      ref={mapContainer} 
-      style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        zIndex: 1, // Sit on top of the beige background
-        backgroundColor: '#e5e7eb' // Light gray placeholder
-      }} 
-    />
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1, backgroundColor: '#e5e7eb' }}>
+      <Map
+        mapLib={maplibregl}
+        initialViewState={{
+          ...START_LOCATION,
+          zoom: 14
+        }}
+        style={{ width: '100%', height: '100%' }}
+        mapStyle={{
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; OpenStreetMap Contributors'
+            }
+          },
+          layers: [
+            {
+              id: 'osm',
+              type: 'raster',
+              source: 'osm',
+              minzoom: 0,
+              maxzoom: 22
+            }
+          ]
+        }}
+      >
+        <Marker longitude={START_LOCATION.longitude} latitude={START_LOCATION.latitude} color="red" />
+      </Map>
+    </div>
   );
 };
 

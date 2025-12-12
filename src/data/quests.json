@@ -1,0 +1,189 @@
+[
+    {
+        "id": "q_first_steps",
+        "title": "First Steps",
+        "type": "discovery",
+        "rarity": "common",
+        "description": "Visit any 3 heritage sites to get a taste of Hampi.",
+        "xp": 150,
+        "stamps": {
+            "common": 1
+        },
+        "badge": "Curious Explorer",
+        "duration_days": null,
+        "requirements": {
+            "visit_count": 3
+        }
+    },
+    {
+        "id": "q_temple_seeker",
+        "title": "Temple Seeker",
+        "type": "discovery",
+        "rarity": "common",
+        "description": "Visit all 5 main temples: Virupaksha, Krishna, Pattabhirama, Hemakuta, Achyutaraya.",
+        "xp": 500,
+        "stamps": {
+            "common": 3
+        },
+        "badge": "Temple Master",
+        "duration_days": 2,
+        "requirements": {
+            "specific_sites": [
+                "Virupaksha Temple",
+                "Krishna Temple",
+                "Pattabhirama Temple",
+                "Hemakuta Temple",
+                "Achyutaraya Temple"
+            ]
+        }
+    },
+    {
+        "id": "q_hidden_gem",
+        "title": "Hidden Gem",
+        "type": "discovery",
+        "rarity": "rare",
+        "description": "Visit 3 lesser-known sites: Matanga Hill, Underground Shiva Temple, Harihara Temple.",
+        "xp": 400,
+        "stamps": {
+            "rare": 2
+        },
+        "badge": "Off-Path Explorer",
+        "duration_days": 3,
+        "requirements": {
+            "specific_sites": [
+                "Matanga Hill",
+                "Underground Shiva Temple",
+                "Harihara Temple"
+            ]
+        }
+    },
+    {
+        "id": "q_sunrise_ritual",
+        "title": "Sunrise Ritual",
+        "type": "discovery",
+        "rarity": "rare",
+        "description": "Visit Hemakuta Temple at sunrise (6-7 AM) and take a photo.",
+        "xp": 350,
+        "stamps": {
+            "rare": 1
+        },
+        "badge": "Early Riser",
+        "duration_days": null,
+        "requirements": {
+            "specific_sites": [
+                "Hemakuta Temple"
+            ],
+            "time_window": {
+                "start": "06:00",
+                "end": "07:00"
+            },
+            "photo_required": true
+        }
+    },
+    {
+        "id": "q_stone_story",
+        "title": "Stone Story",
+        "type": "challenge",
+        "rarity": "common",
+        "description": "Read descriptions of 5 sites and answer 3 trivia questions.",
+        "xp": 200,
+        "badge": "History Buff",
+        "duration_days": null,
+        "requirements": {
+            "read_count": 5,
+            "trivia_count": 3
+        }
+    },
+    {
+        "id": "q_snap_shot",
+        "title": "Snap Shot",
+        "type": "photo",
+        "rarity": "common",
+        "description": "Take a photo at any heritage site.",
+        "xp": 100,
+        "badge": "Photographer",
+        "duration_days": null,
+        "requirements": {
+            "photo_count": 1
+        }
+    },
+    {
+        "id": "q_golden_frame",
+        "title": "Golden Frame",
+        "type": "photo",
+        "rarity": "rare",
+        "description": "Take aesthetically pleasing photos at 3 different sites.",
+        "xp": 350,
+        "badge": "Artistic Eye",
+        "duration_days": 3,
+        "requirements": {
+            "photo_count": 3
+        }
+    },
+    {
+        "id": "q_twos_company",
+        "title": "Two's Company",
+        "type": "social",
+        "rarity": "common",
+        "description": "Visit a site with a friend/group member.",
+        "xp": 200,
+        "badge": "Social Explorer",
+        "duration_days": null,
+        "requirements": {
+            "group_size": 2
+        }
+    },
+    {
+        "id": "q_sunset_chaser",
+        "title": "Sunset Chaser",
+        "type": "discovery",
+        "rarity": "epic",
+        "description": "Visit 4 different sites and catch sunset at each.",
+        "xp": 800,
+        "stamps": {
+            "epic": 1
+        },
+        "bonus_xp": 50,
+        "badge": "Golden Hour Master",
+        "duration_days": 5,
+        "requirements": {
+            "sunset_visits": 4
+        }
+    },
+    {
+        "id": "q_archaeologist_route",
+        "title": "Archaeologist's Route",
+        "type": "discovery",
+        "rarity": "epic",
+        "description": "Visit 8 specific sites in a specific order.",
+        "xp": 1200,
+        "stamps": {
+            "epic": 2
+        },
+        "bonus_xp": 100,
+        "badge": "Archaeologist",
+        "duration_days": 7,
+        "requirements": {
+            "visit_count": 8,
+            "ordered": true
+        }
+    },
+    {
+        "id": "q_moonlight_wanderer",
+        "title": "Moonlight Wanderer",
+        "type": "discovery",
+        "rarity": "mythic",
+        "description": "Visit 5 sites and complete at least 1 site visit between 9 PM - 5 AM.",
+        "xp": 2000,
+        "stamps": {
+            "mythic": 1
+        },
+        "bonus_xp": 200,
+        "badge": "Nocturnal Explorer",
+        "duration_days": 14,
+        "requirements": {
+            "night_visit": true,
+            "visit_count": 5
+        }
+    }
+]
