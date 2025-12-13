@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useGamification } from '../context/GamificationContext';
 import { Trophy, Medal, Map, Star, Award, Zap, Crown, Flame, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Profile() {
-    const { xp, level, getLevelTitle, getLevelProgress, badges, completedQuests, stamps, userProfile } = useGamification();
+    const { user, profile } = useAuth();
+    // Destructure quests here to fix the original ReferenceError constraint
+    const { xp, level, getLevelTitle, getLevelProgress, badges, completedQuests, stamps, quests } = useGamification();
     const progress = getLevelProgress();
 
     const [showQuestModal, setShowQuestModal] = useState(false);
@@ -37,7 +40,11 @@ export default function Profile() {
                                 whileHover={{ scale: 1.05, rotate: -2 }}
                                 className="w-36 h-36 rounded-3xl bg-brand-accent flex items-center justify-center text-6xl border-4 border-brand-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
                             >
-                                <span className="group-hover:scale-110 transition-transform duration-300">{userProfile?.avatar || '🤠'}</span>
+                                {profile?.avatar_url?.startsWith('http') ? (
+                                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="group-hover:scale-110 transition-transform duration-300">🤠</span>
+                                )}
                             </motion.div>
                             <div className="absolute -bottom-4 -right-4 bg-yellow-400 text-brand-dark font-black text-xl px-4 py-2 rounded-xl border-4 border-brand-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-3">
                                 LVL {level}
@@ -47,7 +54,7 @@ export default function Profile() {
                         {/* Player Info */}
                         <div className="flex-1 w-full text-center md:text-left space-y-3">
                             <div>
-                                <h1 className="text-4xl font-black text-brand-dark dark:text-brand-dark-text tracking-tight transition-colors">{userProfile?.username || 'Explorer'}</h1>
+                                <h1 className="text-4xl font-black text-brand-dark dark:text-brand-dark-text tracking-tight transition-colors">{profile?.username || profile?.full_name || user?.email || 'Explorer'}</h1>
                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg border-2 border-purple-200 mt-2 font-bold text-sm uppercase tracking-wide">
                                     <Crown size={16} />
                                     {getLevelTitle()}
@@ -228,7 +235,7 @@ export default function Profile() {
                             {completedQuests.length > 0 ? (
                                 <div className="space-y-3">
                                     {completedQuests.map((questId) => {
-                                        const quest = quests.find(q => q.id === questId);
+                                        const quest = quests?.find(q => q.id === questId); // Defensive check
                                         return quest ? (
                                             <div key={questId} className="bg-rose-50 rounded-xl p-4 border-2 border-rose-200">
                                                 <div className="flex items-center gap-3">

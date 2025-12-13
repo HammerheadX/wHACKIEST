@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGamification } from '../context/GamificationContext';
 import { Baby, PersonStanding, Check, Calendar, ArrowRight } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 export default function Onboarding() {
     const { updateProfile } = useGamification();
+    const { refreshProfile } = useAuth();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
 
@@ -29,10 +32,11 @@ export default function Onboarding() {
         else if (step === 3 && profile.gender) setStep(4);
     };
 
-    const handleComplete = () => {
+    const handleComplete = async () => {
         if (profile.dob) {
-            updateProfile(profile);
-            navigate('/');
+            await updateProfile(profile);
+            if (refreshProfile) await refreshProfile();
+            navigate('/explore');
         }
     };
 

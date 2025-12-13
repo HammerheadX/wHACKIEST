@@ -22,7 +22,7 @@ export default function Header() {
            - backdrop-blur and semi-transparent white matches the reference
        */}
             <nav className="pointer-events-auto flex items-center bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-full p-1.5 gap-1 dark:bg-brand-dark/80 dark:border-white/10">
-                <Link to="/" className={navItemClass('/')}>Explore</Link>
+                <Link to="/explore" className={navItemClass('/explore')}>Explore</Link>
                 {/* Wanderer Button (Center of Pill) */}
                 <Link to="/wanderer" className={navItemClass('/wanderer')}>Wanderer</Link>
                 <Link to="/profile" className={navItemClass('/profile')}>Profile</Link>

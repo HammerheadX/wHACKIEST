@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import ExplorerMode from './pages/ExplorerMode';
 import FogMap from './components/FogMap';
 import Header from './components/Header';
@@ -12,11 +13,15 @@ import SiteManager from './pages/Admin/SiteManager';
 import AIGameMaster from './pages/Admin/AIGameMaster';
 import { GamificationProvider } from './context/GamificationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // 1. Protected Route Wrapper
 const ProtectedRoute = () => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? <Outlet /> : <Navigate to="/auth" replace />;
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAF3E1]">Loading...</div>;
+
+  return user ? <Outlet /> : <Navigate to="/auth" replace />;
 };
 
 // 2. Layout Wrapper (Renders Header + Content)
@@ -33,36 +38,38 @@ export default function App() {
   return (
     <GamificationProvider>
       <ThemeProvider>
-        <Router>
-          <div className="min-h-screen bg-brand-bg text-brand-dark dark:bg-brand-dark-bg dark:text-brand-dark-text font-sans selection:bg-brand-accent selection:text-white transition-colors duration-300">
-            <Routes>
-              {/* Public Route: Auth */}
-              <Route path="/auth" element={<Auth />} />
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen bg-brand-bg text-brand-dark dark:bg-brand-dark-bg dark:text-brand-dark-text font-sans selection:bg-brand-accent selection:text-white transition-colors duration-300">
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<Auth />} />
 
+                {/* Protected Routes (Wrapped in MainLayout) */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route element={<MainLayout />}>
+                    <Route path="/explore" element={<ExplorerMode />} />
+                    <Route path="/wanderer" element={<FogMap />} />
+                    <Route path="/profile" element={<Profile />} />
+                  </Route>
 
-              {/* Protected Routes (Wrapped in MainLayout) */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route element={<MainLayout />}>
-                  <Route path="/" element={<ExplorerMode />} />
-                  <Route path="/wanderer" element={<FogMap />} />
-                  <Route path="/profile" element={<Profile />} />
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<Navigate to="quests" replace />} />
+                    <Route path="quests" element={<QuestManager />} />
+                    <Route path="sites" element={<SiteManager />} />
+                    <Route path="ai-master" element={<AIGameMaster />} />
+                  </Route>
                 </Route>
 
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="quests" replace />} />
-                  <Route path="quests" element={<QuestManager />} />
-                  <Route path="sites" element={<SiteManager />} />
-                  <Route path="ai-master" element={<AIGameMaster />} />
-                </Route>
-              </Route>
-
-              {/* Catch all redirect */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </Router>
+                {/* Catch all redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </Router>
+        </AuthProvider>
       </ThemeProvider>
     </GamificationProvider>
   );

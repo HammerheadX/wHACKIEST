@@ -2,19 +2,56 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Mail, Lock, User, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Auth() {
     const [isLogin, setIsLogin] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({ fullName: '', email: '', password: '' });
+    const { signIn, signUp } = useAuth();
     const navigate = useNavigate();
 
-    const handleAuth = (e) => {
+    const handleAuth = async (e) => {
         e.preventDefault();
-        // Simulate Authentication
-        localStorage.setItem('isAuthenticated', 'true');
-        // Dispatch a custom event or context update if needed, 
-        // but for now simple localstorage + navigate
-        window.dispatchEvent(new Event('storage'));
-        navigate('/onboarding');
+        setLoading(true);
+
+        try {
+            if (isLogin) {
+                const { error } = await signIn({
+                    email: formData.email,
+                    password: formData.password
+                });
+                if (error) throw error;
+                navigate('/explore');
+            } else {
+                const { data, error } = await signUp({
+                    email: formData.email,
+                    password: formData.password,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/onboarding`,
+                        data: {
+                            full_name: formData.fullName,
+                            avatar_url: `https://api.dicebear.com/7.x/adventurer/svg?seed=${formData.fullName}`
+                        }
+                    }
+                });
+                if (error) throw error;
+
+                // If signup provides a session (email confirm disabled), go to onboarding
+                if (data?.session) {
+                    navigate('/onboarding');
+                } else {
+                    // Fallback for email confirmation enabled
+                    alert("Verification link sent! Please check your email and click the link to start your journey.");
+                    // Do NOT switch to login mode, keep them here or show success state
+                }
+            }
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -25,7 +62,7 @@ export default function Auth() {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#818cf8]/20 rounded-full blur-[100px]" />
             </div>
 
-            <div className="max-w-4xl w-full h-[600px] bg-white/40 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/50 flex overflow-hidden relative z-10">
+            <div className="max-w-4xl w-full h-[600px] bg-white/40 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/50 flex overflow-hidden relative z-10 transition-all duration-300">
 
                 {/* Left Side: Key Visual (Dynamic) */}
                 <div className="w-1/2 relative hidden md:block overflow-hidden transition-all duration-500">
@@ -89,7 +126,14 @@ export default function Auth() {
                                 >
                                     <div className="bg-white/60 rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent focus-within:border-brand-accent transition-colors">
                                         <User size={18} className="text-gray-400" />
-                                        <input type="text" placeholder="Full Name" className="bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-500" />
+                                        <input
+                                            required={!isLogin}
+                                            type="text"
+                                            placeholder="Full Name"
+                                            value={formData.fullName}
+                                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                            className="bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-500"
+                                        />
                                     </div>
                                 </motion.div>
                             )}
@@ -97,17 +141,35 @@ export default function Auth() {
 
                         <div className="bg-white/60 rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent focus-within:border-brand-accent transition-colors">
                             <Mail size={18} className="text-gray-400" />
-                            <input type="email" placeholder="Email Address" className="bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-500" />
+                            <input
+                                required
+                                type="email"
+                                placeholder="Email Address"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-500"
+                            />
                         </div>
 
                         <div className="bg-white/60 rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent focus-within:border-brand-accent transition-colors">
                             <Lock size={18} className="text-gray-400" />
-                            <input type="password" placeholder="Password" className="bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-500" />
+                            <input
+                                required
+                                type="password"
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                className="bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-500"
+                            />
                         </div>
 
-                        <button type="submit" className="w-full bg-brand-accent text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mt-4 group">
-                            {isLogin ? "Resume Adventure" : "Create Account"}
-                            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-brand-accent text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mt-4 group disabled:opacity-50"
+                        >
+                            {loading ? "Processing..." : (isLogin ? "Resume Adventure" : "Create Account")}
+                            {!loading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
                         </button>
                     </form>
 

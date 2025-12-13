@@ -71,3 +71,55 @@ INSERT INTO public.sites (name, category, description, image, distance, xp, lat,
 ('Matanga Hill', 'place', 'Lesser-known hill with panoramic views', '/images/matanga.jpg', '3.2 km', 150, 15.3500, 76.4700),
 ('Underground Shiva Temple', 'place', 'Hidden temple beneath the ground', '/images/underground.jpg', '2.8 km', 150, 15.3450, 76.4680),
 ('Harihara Temple', 'place', 'Temple dedicated to Harihara', '/images/harihara.jpg', '2.5 km', 150, 15.3430, 76.4660);
+
+-- Create Profiles Table (Public User Data)
+-- Create Profiles Table (Public User Data)
+create table public.profiles (
+  id uuid references auth.users on delete cascade not null primary key,
+  email text,
+  full_name text,
+  username text, -- New field
+  gender text,   -- New field
+  birthdate date, -- New field
+  avatar_url text,
+  xp integer default 0,
+  level integer default 1,
+  badges text[], -- Array of badge names
+  completed_quests uuid[], -- Array of quest IDs
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- RLS for Profiles
+alter table public.profiles enable row level security;
+
+create policy "Public profiles are viewable by everyone." on public.profiles for select using (true);
+create policy "Users can insert their own profile." on public.profiles for insert with check (auth.uid() = id);
+create policy "Users can update own profile." on public.profiles for update using (auth.uid() = id);
+
+-- Function to handle new user signup automatically
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, full_name, username, gender, birthdate, avatar_url)
+  values (
+    new.id, 
+    new.email, 
+    new.raw_user_meta_data->>'full_name', 
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'gender',
+    (new.raw_user_meta_data->>'birthdate')::date,
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- MIGRATION: Run this if you already have the table
+-- alter table public.profiles add column if not exists username text;
+-- alter table public.profiles add column if not exists gender text;
+-- alter table public.profiles add column if not exists birthdate date;
+
+-- Trigger to call the function on signup
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
