@@ -12,12 +12,12 @@ Secure signup and login functionality powered by Supabase, ensuring a personaliz
 ### 🌍 Wanderer Mode
 Experience the world freely. Wanderer mode lets users roam the map, discovering hidden gems and points of interest dynamically.
 
-![Wanderer Mode](./Screenshot%202025-12-13%20at%2010.55.15.png)
+![Wanderer Mode](./Screenshot%202025-12-13%20at%2010.55.40.png)
 
 ### 🗺️ Explorer Page
 A comprehensive map interface for planning your journey. Visualize locations, track your position, and identify key landmarks using interactive maps.
 
-![Explorer Page](./Screenshot%202025-12-13%20at%2010.55.40.png)
+![Explorer Page](./Screenshot%202025-12-13%20at%2010.56.21.png)
 
 ### 📜 Quests System
 Engage with the history and culture of your surroundings through structured quests. Complete challenges to earn rewards and level up your profile.
@@ -32,7 +32,7 @@ Integrated with Google Gemini, the AI chatbot acts as your intelligent guide, of
 ### 👤 User Profile
 Track your progress, view completed quests, and manage your account settings.
 
-![Profile](./Screenshot%202025-12-13%20at%2010.56.21.png)
+![Profile](./Screenshot%202025-12-13%20at%2010.55.15.png)
 
 ### 🌙 Dark Mode
 Fully supported dark mode for a comfortable viewing experience in low-light environments, automatically adjusting the UI and map styles.
