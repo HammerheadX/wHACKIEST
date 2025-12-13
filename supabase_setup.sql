@@ -11,7 +11,9 @@ create table public.quests (
   duration_days integer,
   badge text,
   requirements jsonb, -- Flexible structure for specific completion logic
-  stamps jsonb -- To store stamp rewards e.g., {"common": 1}
+  stamps jsonb, -- To store stamp rewards e.g., {"common": 1}
+  lat double precision,
+  lng double precision
 );
 
 -- Create Sites Table

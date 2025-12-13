@@ -1,8 +1,69 @@
 import React from 'react';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Trophy, Star, Clock, MapPin, CheckCircle2 } from 'lucide-react';
+import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+import { Trophy, Star, Clock, MapPin, CheckCircle2, Camera, AlertCircle } from 'lucide-react';
+import { calculateDistance } from '../utils/distance';
 
-export default function QuestCard({ quest, isCompleted, onClaim }) {
+export default function QuestCard({ quest, isCompleted, onClaim, userLocation }) {
+    const [status, setStatus] = React.useState('idle'); // idle, verifying, success, error, photo_ready
+    const [errorMsg, setErrorMsg] = React.useState('');
+
+    // Distance Threshold in km (e.g., 1.0km)
+    const DISTANCE_THRESHOLD_KM = 1.0;
+
+    const handleStartQuest = (e) => {
+        e.stopPropagation();
+
+        if (status === 'photo_ready') {
+            setStatus('success');
+            setTimeout(() => onClaim(quest.id), 1000);
+            return;
+        }
+
+        setStatus('verifying');
+        setErrorMsg('');
+
+        if (!quest.lat || !quest.lng) {
+            onClaim(quest.id);
+            setStatus('idle');
+            return;
+        }
+
+        // Force a fresh location check
+        if (!navigator.geolocation) {
+            setStatus('error');
+            setErrorMsg("Geolocation not supported");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+
+                const dist = calculateDistance(userLat, userLng, quest.lat, quest.lng);
+
+                // Assuming 'dist' is in km
+                if (dist <= DISTANCE_THRESHOLD_KM) {
+                    if (quest.type === 'photo') {
+                        setStatus('photo_ready');
+                    } else {
+                        setStatus('success');
+                        setTimeout(() => onClaim(quest.id), 1000);
+                    }
+                } else {
+                    console.log("Too far:", dist, "km");
+                    setStatus('error');
+                    setErrorMsg(`Too far! Go to the location (${dist}km away).`);
+                }
+            },
+            (error) => {
+                console.error("Location Error:", error);
+                setStatus('error');
+                setErrorMsg("Location access denied or unavailable.");
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    };
     // 3D Tilt Effect
     const x = useMotionValue(0);
     const y = useMotionValue(0);
@@ -126,13 +187,40 @@ export default function QuestCard({ quest, isCompleted, onClaim }) {
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => !isCompleted && onClaim(quest.id)}
-                    disabled={isCompleted}
+                    onClick={handleStartQuest}
+                    disabled={isCompleted || status === 'verifying'}
                     style={{ backgroundColor: isCompleted ? '#9ca3af' : rarityAccents[quest.rarity] }}
-                    className={`w-full py-4 rounded-xl font-bold text-white shadow-lg border-b-4 border-black/20 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2`}
+                    className={`w-full py-4 rounded-xl font-bold text-white shadow-lg border-b-4 border-black/20 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2 relative overflow-hidden`}
                 >
-                    {isCompleted ? 'Completed' : 'Start Quest'}
+                    {isCompleted ? (
+                        <>Completed <CheckCircle2 size={20} /></>
+                    ) : status === 'verifying' ? (
+                        <>Verifying... <MapPin size={20} className="animate-bounce" /></>
+                    ) : status === 'photo_ready' ? (
+                        <>Take Photo <Camera size={20} /></>
+                    ) : status === 'error' ? (
+                        <span className="text-xs">{errorMsg || "Try Again"}</span>
+                    ) : (
+                        <>Start Quest <MapPin size={20} /></>
+                    )}
                 </motion.button>
+
+                {/* Status Message Overlay */}
+                <AnimatePresence>
+                    {status === 'photo_ready' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute bottom-20 left-6 right-6 bg-white/90 backdrop-blur text-brand-dark p-2 rounded-lg text-xs font-bold text-center shadow-lg border border-brand-accent/20"
+                        >
+                            <span className="flex items-center justify-center gap-1 text-green-600">
+                                <CheckCircle2 size={12} /> You're here!
+                            </span>
+                            Tap button to capture moment!
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
             </div>
         </motion.div>
