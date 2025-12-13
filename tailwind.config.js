@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -12,6 +13,10 @@ export default {
           card: '#F5E7C6',     // Sand (Cards/Secondary)
           accent: '#FF6D1F',   // Orange (Buttons/Highlights)
           dark: '#222222',     // Black (Text)
+          // Dark Mode Palette
+          'dark-bg': '#1a1a1a',
+          'dark-card': '#2d2d2d',
+          'dark-text': '#e5e5e5',
         }
       },
       fontFamily: {
